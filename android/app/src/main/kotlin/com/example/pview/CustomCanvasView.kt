@@ -43,7 +43,7 @@ class CustomCanvasView(context: Context) : View(context) {
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
-        val y = event.y
+        val y = event.y 
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {

@@ -1,10 +1,7 @@
 package com.example.pview
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.*
 import android.view.MotionEvent
 import android.view.View
 
@@ -13,6 +10,10 @@ class CustomCanvasView(context: Context) : View(context) {
     private var currentPath: Path? = null
     private var lastX = 0f
     private var lastY = 0f
+    
+    // Create a bitmap to cache the drawing
+    private var cacheBitmap: Bitmap? = null
+    private var cacheCanvas: Canvas? = null
     
     private val paint = Paint().apply {
         color = Color.BLACK
@@ -23,14 +24,20 @@ class CustomCanvasView(context: Context) : View(context) {
         isAntiAlias = true
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Initialize or recreate the bitmap when size changes
+        cacheBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        cacheCanvas = Canvas(cacheBitmap!!)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         
-        // Draw all completed paths
-        for (path in paths) {
-            canvas.drawPath(path, paint)
-        }
-        // Draw current path if exists
+        // Draw the cached bitmap
+        cacheBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
+        
+        // Draw only the current path on top
         currentPath?.let { canvas.drawPath(it, paint) }
     }
 
@@ -40,7 +47,6 @@ class CustomCanvasView(context: Context) : View(context) {
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                // Start new path
                 currentPath = Path().apply {
                     moveTo(x, y)
                 }
@@ -49,42 +55,45 @@ class CustomCanvasView(context: Context) : View(context) {
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                // Only draw if we have a current path
                 currentPath?.let { path ->
-                    // Calculate the distance moved
                     val dx = Math.abs(x - lastX)
                     val dy = Math.abs(y - lastY)
                     
-                    // Only register movement if it's significant enough
                     if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
-                        // Create smooth curve through points
                         path.quadTo(lastX, lastY, (x + lastX) / 2, (y + lastY) / 2)
                         lastX = x
                         lastY = y
+                        invalidate()
                     }
                 }
             }
             MotionEvent.ACTION_UP -> {
-                // Complete the path and add to paths list
                 currentPath?.let { path ->
                     path.lineTo(x, y)
+                    // Draw the completed path to the cache
+                    cacheCanvas?.drawPath(path, paint)
                     paths.add(path)
                 }
                 currentPath = null
+                invalidate()
             }
         }
         
-        invalidate()
         return true
     }
 
     fun clearCanvas() {
         paths.clear()
+        cacheBitmap?.eraseColor(Color.TRANSPARENT)
         currentPath = null
         invalidate()
     }
 
     companion object {
         private const val TOUCH_TOLERANCE = 4f
+    }
+
+    init {
+        setLayerType(LAYER_TYPE_HARDWARE, null)
     }
 }

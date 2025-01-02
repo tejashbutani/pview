@@ -17,8 +17,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Scaffold(body:  const DrawingScreen(),
-    ),);
+      home: const Scaffold(
+        body: DrawingScreen(),
+      ),
+    );
   }
 }
 
@@ -31,28 +33,50 @@ class DrawingScreen extends StatefulWidget {
 
 class _DrawingScreenState extends State<DrawingScreen> {
   MethodChannel? _channel;
+  bool isPenEnabled = false;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-
-        // Flutter canvas overlay for additional tools
+        // Flutter canvas overlay for normal drawing
         CustomPaint(
           painter: ToolsPainter(),
           child: GestureDetector(
             onPanUpdate: (details) {
-              // Handle tool interactions
+              // Handle regular drawing interactions when pen is not enabled
+              if (!isPenEnabled) {
+                // Add your drawing logic here
+              }
             },
           ),
         ),
 
-         // Hardware accelerated native view
-        AndroidView(
-          viewType: 'custom_canvas_view',
-          onPlatformViewCreated: (int id) {
-            _channel = MethodChannel('custom_canvas_view_$id');
-          },
+        // Android View on top only when pen is enabled
+        if (isPenEnabled)
+          AndroidView(
+            viewType: 'custom_canvas_view',
+            onPlatformViewCreated: (int id) {
+              _channel = MethodChannel('custom_canvas_view_$id');
+            },
+          ),
+
+        // Pen toggle button (always on top)
+        Positioned(
+          bottom: 40,
+          right: 40,
+          child: FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                isPenEnabled = !isPenEnabled;
+              });
+            },
+            backgroundColor: isPenEnabled ? Colors.blue : Colors.white,
+            child: Icon(
+              isPenEnabled ? Icons.edit : Icons.edit_off,
+              color: isPenEnabled ? Colors.white : Colors.grey,
+            ),
+          ),
         ),
       ],
     );

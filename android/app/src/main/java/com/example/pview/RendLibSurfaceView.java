@@ -7,9 +7,11 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.graphics.SurfaceTexture;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -47,6 +49,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private float Prey = 0.0f;
     private Path mPath = new Path();
 
+    private boolean isInitialized = false;
 
     public RendLibSurfaceView(Context context) {
         super(context);
@@ -148,6 +151,50 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 break;
         }
         return true;
+    }
+
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    public void initializeTexture(SurfaceTexture surfaceTexture) {
+        // Initialize RenderLib if not already done
+        if (!isInitialized) {
+            RenderUtils.initRendLib();
+            isInitialized = true;
+        }
+        
+        // Create surface from texture
+        Surface surface = new Surface(surfaceTexture);
+        
+        // Initialize bitmap and canvas if needed
+        if (mBitmap == null) {
+            mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+            mPaintCanvas = new Canvas();
+            mPaintCanvas.setBitmap(mBitmap);
+        }
+        
+        // Draw initial frame
+        updateTexture(surface);
+    }
+
+    private void updateTexture(Surface surface) {
+        if (surface != null && surface.isValid()) {
+            Canvas canvas = surface.lockCanvas(null);
+            try {
+                canvas.drawBitmap(mBitmap, 0, 0, null);
+            } finally {
+                surface.unlockCanvasAndPost(canvas);
+            }
+        }
+    }
+
+    public void cleanup() {
+        if (mBitmap != null) {
+            mBitmap.recycle();
+            mBitmap = null;
+        }
+        RenderUtils.clearBitmapContent();
     }
 
 }

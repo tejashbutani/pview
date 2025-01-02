@@ -17,30 +17,54 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
+      home: const DrawingScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class DrawingScreen extends StatefulWidget {
+  const DrawingScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<DrawingScreen> createState() => _DrawingScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _DrawingScreenState extends State<DrawingScreen> {
   MethodChannel? _channel;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AndroidView(
-        viewType: 'custom_canvas_view',
-        onPlatformViewCreated: (int id) {
-          _channel = MethodChannel('custom_canvas_view_$id');
-        },
-      ),
+    return Stack(
+      children: [
+
+        // Flutter canvas overlay for additional tools
+        CustomPaint(
+          painter: ToolsPainter(),
+          child: GestureDetector(
+            onPanUpdate: (details) {
+              // Handle tool interactions
+            },
+          ),
+        ),
+
+         // Hardware accelerated native view
+        AndroidView(
+          viewType: 'custom_canvas_view',
+          onPlatformViewCreated: (int id) {
+            _channel = MethodChannel('custom_canvas_view_$id');
+          },
+        ),
+      ],
     );
   }
+}
+
+class ToolsPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Draw tool overlays, selection boxes, etc.
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }

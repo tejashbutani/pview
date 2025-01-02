@@ -87,12 +87,12 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         
         RenderUtils.initRendLib();
-        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
-        mScreenWidth = resolution[0];
-        mScreenHeight = resolution[1];
+//        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
+//        mScreenWidth = resolution[0];
+//        mScreenHeight = resolution[1];
         
         // Create bitmap with optimal config for drawing
-        mBitmap = RenderUtils.getAccelerateBitmap(mScreenWidth, mScreenHeight);
+        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
         
         getHolder().addCallback(this);
         

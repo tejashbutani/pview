@@ -51,7 +51,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
                 strokes: strokes,
                 androidViewSize: androidViewSize,
               ),
-              size: Size(constraints.maxWidth, constraints.maxHeight),
+              size: Size(3860, 2160),
             ),
             if (isPenEnabled)
               AndroidView(

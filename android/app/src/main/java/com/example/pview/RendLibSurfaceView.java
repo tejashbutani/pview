@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -15,7 +16,13 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import display.interactive.renderlib.RenderUtils;
+import io.flutter.plugin.common.MethodChannel;
 
 /**
  * @ClassName: display.interactive.rendlibtools.view
@@ -46,6 +53,13 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private float Prex = 0.0f;
     private float Prey = 0.0f;
     private Path mPath = new Path();
+
+    private List<PointF> currentStrokePoints = new ArrayList<>();
+    private MethodChannel methodChannel;
+
+    public void setMethodChannel(MethodChannel channel) {
+    this.methodChannel = channel;
+   } 
 
 
     public RendLibSurfaceView(Context context) {
@@ -123,18 +137,45 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if(MotionEvent.ACTION_DOWN == event.getAction()) {
-            Prex = event.getX();
-            Prey = event.getY();
-            mPath.moveTo(event.getX(), event.getY());
-            mPaintCanvas.drawPoint(Prex, Prey, mPaint);
-        } else if(MotionEvent.ACTION_UP == event.getAction()) {
-            mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
-        } else if(MotionEvent.ACTION_MOVE == event.getAction()) {
-            mPath.quadTo(Prex, Prey, event.getX(), event.getY());
-            Prex = event.getX();
-            Prey = event.getY();
-            mPaintCanvas.drawPath(mPath,mPaint);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                currentStrokePoints.clear();
+                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
+                mPath.moveTo(event.getX(), event.getY());
+                mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
+                break;
+                
+            case MotionEvent.ACTION_MOVE:
+                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
+                mPath.quadTo(Prex, Prey, event.getX(), event.getY());
+                Prex = event.getX();
+                Prey = event.getY();
+                mPaintCanvas.drawPath(mPath, mPaint);
+                break;
+                
+            case MotionEvent.ACTION_UP:
+                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
+                mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
+                
+                // Send stroke data back to Flutter
+                if (methodChannel != null) {
+                    Map<String, Object> strokeData = new HashMap<>();
+                    List<Map<String, Double>> points = new ArrayList<>();
+                    
+                    for (PointF point : currentStrokePoints) {
+                        Map<String, Double> pointMap = new HashMap<>();
+                        pointMap.put("x", (double) point.x);
+                        pointMap.put("y", (double) point.y);
+                        points.add(pointMap);
+                    }
+                    
+                    strokeData.put("points", points);
+                    strokeData.put("color", Color.RED);
+                    strokeData.put("width", 4.0);
+                    
+                    methodChannel.invokeMethod("onStrokeComplete", strokeData);
+                }
+                break;
         }
         return true;
     }

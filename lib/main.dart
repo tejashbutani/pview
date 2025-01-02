@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:pview/models/stroke.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,34 +35,24 @@ class DrawingScreen extends StatefulWidget {
 class _DrawingScreenState extends State<DrawingScreen> {
   MethodChannel? _channel;
   bool isPenEnabled = false;
+  final List<Stroke> strokes = [];
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Flutter canvas overlay for normal drawing
         CustomPaint(
-          painter: ToolsPainter(),
-          child: GestureDetector(
-            onPanUpdate: (details) {
-              // Handle regular drawing interactions when pen is not enabled
-              if (!isPenEnabled) {
-                // Add your drawing logic here
-              }
-            },
-          ),
+          painter: ToolsPainter(strokes: strokes),
+          child: Container(),
         ),
-
-        // Android View on top only when pen is enabled
         if (isPenEnabled)
           AndroidView(
             viewType: 'custom_canvas_view',
             onPlatformViewCreated: (int id) {
               _channel = MethodChannel('custom_canvas_view_$id');
+              _channel?.setMethodCallHandler(_handleMethodCall);
             },
           ),
-
-        // Pen toggle button (always on top)
         Positioned(
           bottom: 40,
           right: 40,
@@ -81,14 +72,53 @@ class _DrawingScreenState extends State<DrawingScreen> {
       ],
     );
   }
+
+  Future<dynamic> _handleMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'onStrokeComplete':
+        try {
+          final strokeData = Map<String, dynamic>.from(call.arguments);
+          final stroke = Stroke.fromJson(strokeData);
+          setState(() {
+            strokes.add(stroke);
+          });
+          print('Received stroke with ${stroke.points.length} points'); // Debug log
+        } catch (e) {
+          print('Error processing stroke data: $e'); // Debug log
+        }
+        break;
+    }
+  }
 }
 
 class ToolsPainter extends CustomPainter {
+  final List<Stroke> strokes;
+
+  ToolsPainter({required this.strokes});
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw tool overlays, selection boxes, etc.
+    for (final stroke in strokes) {
+      if (stroke.points.length < 2) continue;
+
+      final paint = Paint()
+        ..color = stroke.color
+        ..strokeWidth = stroke.width
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+
+      final path = Path();
+      path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
+
+      for (int i = 1; i < stroke.points.length; i++) {
+        path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+      }
+
+      canvas.drawPath(path, paint);
+    }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
+  bool shouldRepaint(ToolsPainter oldDelegate) => true;
 }

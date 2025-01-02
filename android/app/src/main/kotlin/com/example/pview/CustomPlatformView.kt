@@ -15,6 +15,7 @@ class CustomPlatformView(
 
     init {
         methodChannel.setMethodCallHandler(this)
+        rendLibView.setMethodChannel(methodChannel)
     }
 
     override fun getView(): View {

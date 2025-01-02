@@ -49,17 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Drawing Canvas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              _channel?.invokeMethod('clear');
-            },
-          ),
-        ],
-      ),
       body: _textureId != null ? Texture(textureId: _textureId!) : const Center(child: CircularProgressIndicator()),
     );
   }

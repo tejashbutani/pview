@@ -69,31 +69,34 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     }
 
     private void init(Context context) {
-
-        // Library resources need to be loaded before use
+        // Initialize RenderLib (Hardware acceleration library)
         RenderUtils.initRendLib();
-        // getScreenSize
+        
+        // Get native screen resolution
         int[] resolution = RenderUtils.getDeviceNativeResolution(context);
         mScreenWidth = resolution[0];
         mScreenHeight = resolution[1];
+        
+        // Create hardware-accelerated bitmap (4K resolution)
         mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
-
+        
+        // Set up surface holder callback
         getHolder().addCallback(this);
-
-
+        
+        // Initialize drawing path
         mPath.moveTo(0f, 100f);
-
-
-        // init paint
+        
+        // Configure paint settings
         mPaint = new Paint();
         mPaint.setColor(Color.RED);
         mPaint.setStrokeWidth(4.0f);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
         mPaint.setAntiAlias(true);
+        
+        // Set up canvas with hardware-accelerated bitmap
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
-
     }
 
     @Override
@@ -101,40 +104,48 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         if(surfaceHolder != null) {
             mHolder = surfaceHolder;
             Canvas canvas = mHolder.lockCanvas();
-            // Set the background of the acceleration bitmap to transparent
+            // Initialize surface with transparent background
             canvas.drawColor(Color.WHITE);
             mHolder.setFormat(PixelFormat.TRANSPARENT);
             mHolder.unlockCanvasAndPost(canvas);
-        } else {
-            Log.w("TestMXW", "surfaceHolder is nulll !!!");
         }
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
+        // Handle surface changes (e.g., rotation)
     }
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+        // Clean up hardware resources
         RenderUtils.clearBitmapContent();
     }
 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if(MotionEvent.ACTION_DOWN == event.getAction()) {
-            Prex = event.getX();
-            Prey = event.getY();
-            mPath.moveTo(event.getX(), event.getY());
-            mPaintCanvas.drawPoint(Prex, Prey, mPaint);
-        } else if(MotionEvent.ACTION_UP == event.getAction()) {
-            mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
-        } else if(MotionEvent.ACTION_MOVE == event.getAction()) {
-            mPath.quadTo(Prex, Prey, event.getX(), event.getY());
-            Prex = event.getX();
-            Prey = event.getY();
-            mPaintCanvas.drawPath(mPath,mPaint);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                // Start of touch - record position
+                Prex = event.getX();
+                Prey = event.getY();
+                mPath.moveTo(event.getX(), event.getY());
+                mPaintCanvas.drawPoint(Prex, Prey, mPaint);
+                break;
+            
+            case MotionEvent.ACTION_UP:
+                // End of touch - draw final point
+                mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
+                break;
+            
+            case MotionEvent.ACTION_MOVE:
+                // Draw smooth curve using quadratic bezier
+                mPath.quadTo(Prex, Prey, event.getX(), event.getY());
+                Prex = event.getX();
+                Prey = event.getY();
+                mPaintCanvas.drawPath(mPath, mPaint);
+                break;
         }
         return true;
     }

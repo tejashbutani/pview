@@ -51,7 +51,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
                 strokes: strokes,
                 androidViewSize: androidViewSize,
               ),
-              size: Size(3860, 2160),
+              size: const Size(3860, 2160),
             ),
             if (isPenEnabled)
               AndroidView(
@@ -124,10 +124,12 @@ class ToolsPainter extends CustomPainter {
 
       final path = Path();
 
-      // Scale points if we have Android view size
       if (androidViewSize != null) {
         final scaleX = size.width / androidViewSize!.width;
         final scaleY = size.height / androidViewSize!.height;
+        final scale = (scaleX + scaleY) / 2;
+
+        paint.strokeWidth = stroke.width * scale;
 
         final firstPoint = stroke.points[0];
         path.moveTo(

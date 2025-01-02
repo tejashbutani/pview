@@ -86,13 +86,15 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private void init(Context context) {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         
-        RenderUtils.initRendLib();
+         RenderUtils.initRendLib();
+
 //        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
 //        mScreenWidth = resolution[0];
 //        mScreenHeight = resolution[1];
         
         // Create bitmap with optimal config for drawing
         mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
         
         getHolder().addCallback(this);
         
@@ -164,16 +166,21 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                     Map<String, Object> strokeData = new HashMap<>();
                     List<Map<String, Double>> points = new ArrayList<>();
                     
+                    // Get the display metrics to account for screen density
+                    float density = getResources().getDisplayMetrics().density;
+                    
                     for (PointF point : currentStrokePoints) {
                         Map<String, Double> pointMap = new HashMap<>();
-                        pointMap.put("x", (double) point.x);
-                        pointMap.put("y", (double) point.y);
+                        // Convert pixels to device-independent pixels (dp)
+                        pointMap.put("x", (double) (point.x / density));
+                        pointMap.put("y", (double) (point.y / density));
                         points.add(pointMap);
                     }
                     
                     strokeData.put("points", points);
-                    strokeData.put("color", Color.RED);
-                    strokeData.put("width", 4.0);
+                    strokeData.put("color", mPaint.getColor());
+                    // Convert stroke width to dp as well
+                    strokeData.put("width", (double) (mPaint.getStrokeWidth() / density));
                     
                     methodChannel.invokeMethod("onStrokeComplete", strokeData);
                 }

@@ -36,40 +36,50 @@ class _DrawingScreenState extends State<DrawingScreen> {
   MethodChannel? _channel;
   bool isPenEnabled = false;
   final List<Stroke> strokes = [];
+  Size? androidViewSize;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CustomPaint(
-          painter: ToolsPainter(strokes: strokes),
-          child: Container(),
-        ),
-        if (isPenEnabled)
-          AndroidView(
-            viewType: 'custom_canvas_view',
-            onPlatformViewCreated: (int id) {
-              _channel = MethodChannel('custom_canvas_view_$id');
-              _channel?.setMethodCallHandler(_handleMethodCall);
-            },
-          ),
-        Positioned(
-          bottom: 40,
-          right: 40,
-          child: FloatingActionButton(
-            onPressed: () {
-              setState(() {
-                isPenEnabled = !isPenEnabled;
-              });
-            },
-            backgroundColor: isPenEnabled ? Colors.blue : Colors.white,
-            child: Icon(
-              isPenEnabled ? Icons.edit : Icons.edit_off,
-              color: isPenEnabled ? Colors.white : Colors.grey,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        androidViewSize = Size(constraints.maxWidth, constraints.maxHeight);
+
+        return Stack(
+          children: [
+            CustomPaint(
+              painter: ToolsPainter(
+                strokes: strokes,
+                androidViewSize: androidViewSize,
+              ),
+              size: Size(constraints.maxWidth, constraints.maxHeight),
             ),
-          ),
-        ),
-      ],
+            if (isPenEnabled)
+              AndroidView(
+                viewType: 'custom_canvas_view',
+                onPlatformViewCreated: (int id) {
+                  _channel = MethodChannel('custom_canvas_view_$id');
+                  _channel?.setMethodCallHandler(_handleMethodCall);
+                },
+              ),
+            Positioned(
+              bottom: 40,
+              right: 40,
+              child: FloatingActionButton(
+                onPressed: () {
+                  setState(() {
+                    isPenEnabled = !isPenEnabled;
+                  });
+                },
+                backgroundColor: isPenEnabled ? Colors.blue : Colors.white,
+                child: Icon(
+                  isPenEnabled ? Icons.edit : Icons.edit_off,
+                  color: isPenEnabled ? Colors.white : Colors.grey,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -93,8 +103,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
 
 class ToolsPainter extends CustomPainter {
   final List<Stroke> strokes;
+  final Size? androidViewSize;
 
-  ToolsPainter({required this.strokes});
+  ToolsPainter({
+    required this.strokes,
+    this.androidViewSize,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -109,10 +123,30 @@ class ToolsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
 
       final path = Path();
-      path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
 
-      for (int i = 1; i < stroke.points.length; i++) {
-        path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+      // Scale points if we have Android view size
+      if (androidViewSize != null) {
+        final scaleX = size.width / androidViewSize!.width;
+        final scaleY = size.height / androidViewSize!.height;
+
+        final firstPoint = stroke.points[0];
+        path.moveTo(
+          firstPoint.dx * scaleX,
+          firstPoint.dy * scaleY,
+        );
+
+        for (int i = 1; i < stroke.points.length; i++) {
+          final point = stroke.points[i];
+          path.lineTo(
+            point.dx * scaleX,
+            point.dy * scaleY,
+          );
+        }
+      } else {
+        path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
+        for (int i = 1; i < stroke.points.length; i++) {
+          path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+        }
       }
 
       canvas.drawPath(path, paint);

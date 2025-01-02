@@ -100,7 +100,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         
         // Initialize paint with optimal flags
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setColor(Color.RED);
+        mPaint.setColor(Color.BLACK);
         mPaint.setStrokeWidth(4.0f);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);

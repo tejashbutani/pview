@@ -63,17 +63,33 @@ class _DrawingScreenState extends State<DrawingScreen> {
               ),
             Positioned(
               bottom: 40,
-              right: 40,
+              right: 120,
               child: FloatingActionButton(
                 onPressed: () {
                   setState(() {
                     isPenEnabled = !isPenEnabled;
                   });
                 },
-                backgroundColor: isPenEnabled ? Colors.blue : Colors.white,
+                backgroundColor: isPenEnabled ? Colors.black : Colors.white,
                 child: Icon(
                   isPenEnabled ? Icons.edit : Icons.edit_off,
-                  color: isPenEnabled ? Colors.white : Colors.grey,
+                  color: isPenEnabled ? Colors.red : Colors.red,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 40,
+              right: 40,
+              child: FloatingActionButton(
+                onPressed: () {
+                  setState(() {
+                    strokes.clear();
+                  });
+                },
+                backgroundColor: Colors.white,
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
                 ),
               ),
             ),

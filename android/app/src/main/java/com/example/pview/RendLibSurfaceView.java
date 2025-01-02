@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -83,31 +84,28 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     }
 
     private void init(Context context) {
-
-        // Library resources need to be loaded before use
+        setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        
         RenderUtils.initRendLib();
-        // getScreenSize
         int[] resolution = RenderUtils.getDeviceNativeResolution(context);
         mScreenWidth = resolution[0];
         mScreenHeight = resolution[1];
-        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
-
+        
+        // Create bitmap with optimal config for drawing
+        mBitmap = RenderUtils.getAccelerateBitmap(mScreenWidth, mScreenHeight);
+        
         getHolder().addCallback(this);
-
-
-        mPath.moveTo(0f, 100f);
-
-
-        // init paint
-        mPaint = new Paint();
+        
+        // Initialize paint with optimal flags
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setColor(Color.RED);
         mPaint.setStrokeWidth(4.0f);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setAntiAlias(true);
+        mPaint.setDither(true);
+        
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
-
     }
 
     @Override
@@ -139,18 +137,22 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                Prex = event.getX();
+                Prey = event.getY();
                 currentStrokePoints.clear();
-                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
-                mPath.moveTo(event.getX(), event.getY());
-                mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
+                currentStrokePoints.add(new PointF(Prex, Prey));
+                mPath.moveTo(Prex, Prey);
+                mPaintCanvas.drawPoint(Prex, Prey, mPaint);
                 break;
                 
             case MotionEvent.ACTION_MOVE:
-                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
-                mPath.quadTo(Prex, Prey, event.getX(), event.getY());
-                Prex = event.getX();
-                Prey = event.getY();
-                mPaintCanvas.drawPath(mPath, mPaint);
+                float x = event.getX();
+                float y = event.getY();
+                currentStrokePoints.add(new PointF(x, y));
+                mPath.lineTo(x, y);
+                mPaintCanvas.drawLine(Prex, Prey, x, y, mPaint);
+                Prex = x;
+                Prey = y;
                 break;
                 
             case MotionEvent.ACTION_UP:
@@ -175,6 +177,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                     
                     methodChannel.invokeMethod("onStrokeComplete", strokeData);
                 }
+                mPath.reset();
                 break;
         }
         return true;

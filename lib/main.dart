@@ -35,17 +35,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Drawing Canvas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              _channel?.invokeMethod('clear');
-            },
-          ),
-        ],
-      ),
       body: AndroidView(
         viewType: 'custom_canvas_view',
         onPlatformViewCreated: (int id) {

@@ -35,7 +35,7 @@ class DrawingScreen extends StatefulWidget {
 class _DrawingScreenState extends State<DrawingScreen> {
   MethodChannel? _channel;
   bool isPenEnabled = false;
-  final List<Stroke> strokes = [];
+  List<Stroke> strokes = [];
   Size? androidViewSize;
 
   @override

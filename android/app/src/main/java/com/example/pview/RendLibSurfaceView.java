@@ -58,6 +58,11 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private List<PointF> currentStrokePoints = new ArrayList<>();
     private MethodChannel methodChannel;
 
+    private Map<Integer, Path> mPathMap = new HashMap<>();
+    private Map<Integer, List<PointF>> mStrokePointsMap = new HashMap<>();
+    private Map<Integer, Float> mLastXMap = new HashMap<>();
+    private Map<Integer, Float> mLastYMap = new HashMap<>();
+
     public void setMethodChannel(MethodChannel channel) {
     this.methodChannel = channel;
    } 
@@ -86,15 +91,15 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private void init(Context context) {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         
-         RenderUtils.initRendLib();
+        RenderUtils.initRendLib();
 
 //        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
 //        mScreenWidth = resolution[0];
 //        mScreenHeight = resolution[1];
         
         // Create bitmap with optimal config for drawing
-        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
-//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+       mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+        // mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
         
         getHolder().addCallback(this);
         
@@ -131,62 +136,96 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-        RenderUtils.clearBitmapContent();
+       RenderUtils.clearBitmapContent();
     }
 
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
+        int pointerCount = event.getPointerCount();
+        int actionIndex = event.getActionIndex();
+        int pointerId = event.getPointerId(actionIndex);
+        int maskedAction = event.getActionMasked();
+
+        switch (maskedAction) {
             case MotionEvent.ACTION_DOWN:
-                Prex = event.getX();
-                Prey = event.getY();
-                currentStrokePoints.clear();
-                currentStrokePoints.add(new PointF(Prex, Prey));
-                mPath.moveTo(Prex, Prey);
-                mPaintCanvas.drawPoint(Prex, Prey, mPaint);
-                break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                float startX = event.getX(actionIndex);
+                float startY = event.getY(actionIndex);
                 
+                Path path = new Path();
+                path.moveTo(startX, startY);
+                mPathMap.put(pointerId, path);
+                
+                List<PointF> points = new ArrayList<>();
+                points.add(new PointF(startX, startY));
+                mStrokePointsMap.put(pointerId, points);
+                
+                mLastXMap.put(pointerId, startX);
+                mLastYMap.put(pointerId, startY);
+                
+                mPaintCanvas.drawPoint(startX, startY, mPaint);
+                break;
+
             case MotionEvent.ACTION_MOVE:
-                float x = event.getX();
-                float y = event.getY();
-                currentStrokePoints.add(new PointF(x, y));
-                mPath.lineTo(x, y);
-                mPaintCanvas.drawLine(Prex, Prey, x, y, mPaint);
-                Prex = x;
-                Prey = y;
-                break;
-                
-            case MotionEvent.ACTION_UP:
-                currentStrokePoints.add(new PointF(event.getX(), event.getY()));
-                mPaintCanvas.drawPoint(event.getX(), event.getY(), mPaint);
-                
-                // Send stroke data back to Flutter
-                if (methodChannel != null) {
-                    Map<String, Object> strokeData = new HashMap<>();
-                    List<Map<String, Double>> points = new ArrayList<>();
+                for (int i = 0; i < pointerCount; i++) {
+                    int id = event.getPointerId(i);
+                    float x = event.getX(i);
+                    float y = event.getY(i);
                     
-                    // Get the display metrics to account for screen density
+                    Path currentPath = mPathMap.get(id);
+                    List<PointF> currentPoints = mStrokePointsMap.get(id);
+                    Float lastX = mLastXMap.get(id);
+                    Float lastY = mLastYMap.get(id);
+                    
+                    if (currentPath != null && currentPoints != null && lastX != null && lastY != null) {
+                        currentPath.lineTo(x, y);
+                        currentPoints.add(new PointF(x, y));
+                        mPaintCanvas.drawLine(lastX, lastY, x, y, mPaint);
+                        
+                        mLastXMap.put(id, x);
+                        mLastYMap.put(id, y);
+                    }
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_POINTER_UP:
+                List<PointF> finalPoints = mStrokePointsMap.get(pointerId);
+                if (finalPoints != null && methodChannel != null) {
+                    Map<String, Object> strokeData = new HashMap<>();
+                    List<Map<String, Double>> pointsList = new ArrayList<>();
+                    
                     float density = getResources().getDisplayMetrics().density;
                     
-                    for (PointF point : currentStrokePoints) {
+                    for (PointF point : finalPoints) {
                         Map<String, Double> pointMap = new HashMap<>();
-                        // Convert pixels to device-independent pixels (dp)
                         pointMap.put("x", (double) (point.x / density));
                         pointMap.put("y", (double) (point.y / density));
-                        points.add(pointMap);
+                        pointsList.add(pointMap);
                     }
                     
-                    strokeData.put("points", points);
+                    strokeData.put("points", pointsList);
                     strokeData.put("color", mPaint.getColor());
-                    // Convert stroke width to dp as well
                     strokeData.put("width", (double) (mPaint.getStrokeWidth() / density));
                     
                     methodChannel.invokeMethod("onStrokeComplete", strokeData);
                 }
-                mPath.reset();
+                
+                mPathMap.remove(pointerId);
+                mStrokePointsMap.remove(pointerId);
+                mLastXMap.remove(pointerId);
+                mLastYMap.remove(pointerId);
+                break;
+
+            case MotionEvent.ACTION_CANCEL:
+                mPathMap.clear();
+                mStrokePointsMap.clear();
+                mLastXMap.clear();
+                mLastYMap.clear();
                 break;
         }
+        
         return true;
     }
 

@@ -40,6 +40,8 @@ class _DrawingScreenState extends State<DrawingScreen> {
   Size? androidViewSize;
   Color currentColor = Colors.black;
   double currentWidth = 5.0;
+  static const double minStrokeWidth = 1.0;
+  static const double maxStrokeWidth = 10.0;
 
   @override
   Widget build(BuildContext context) {
@@ -110,18 +112,24 @@ class _DrawingScreenState extends State<DrawingScreen> {
                     child: const Icon(Icons.color_lens, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
-                  FloatingActionButton(
-                    onPressed: () {
-                      setState(() {
-                        currentWidth = currentWidth == 5.0 ? 10.0 : 5.0;
-                        _updatePenSettings();
-                      });
-                    },
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.line_weight,
-                      color: Colors.black,
-                      size: currentWidth * 2,
+                  Container(
+                    width: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Slider(
+                      value: currentWidth,
+                      min: minStrokeWidth,
+                      max: maxStrokeWidth,
+                      divisions: 9,
+                      label: currentWidth.round().toString(),
+                      onChanged: (double value) {
+                        setState(() {
+                          currentWidth = value;
+                          _updatePenSettings();
+                        });
+                      },
                     ),
                   ),
                 ],

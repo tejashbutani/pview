@@ -143,6 +143,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
                   setState(() {
                     isPenEnabled = !isPenEnabled;
                   });
+                  _updatePenSettings();
                 },
                 backgroundColor: isPenEnabled ? Colors.black : Colors.white,
                 child: Icon(

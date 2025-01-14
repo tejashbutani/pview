@@ -43,6 +43,18 @@ class _DrawingScreenState extends State<DrawingScreen> {
   static const double minStrokeWidth = 1.0;
   static const double maxStrokeWidth = 10.0;
 
+  Future<void> _togglePen() async {
+    setState(() {
+      isPenEnabled = !isPenEnabled;
+    });
+
+    if (isPenEnabled) {
+      // Small delay to ensure AndroidView is properly initialized
+      await Future.delayed(const Duration(seconds: 10));
+      _updatePenSettings();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -139,12 +151,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
               bottom: 40,
               right: 120,
               child: FloatingActionButton(
-                onPressed: () {
-                  setState(() {
-                    isPenEnabled = !isPenEnabled;
-                  });
-                  _updatePenSettings();
-                },
+                onPressed: _togglePen,
                 backgroundColor: isPenEnabled ? Colors.black : Colors.white,
                 child: Icon(
                   isPenEnabled ? Icons.edit : Icons.edit_off,

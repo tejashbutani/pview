@@ -88,6 +88,16 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         init(context);
     }
 
+    public RendLibSurfaceView(Context context, int initialColor, float initialWidth) {
+        super(context);
+        init(context, initialColor, initialWidth);
+    }
+
+    public RendLibSurfaceView(Context context, AttributeSet attrs, int initialColor, float initialWidth) {
+        super(context, attrs);
+        init(context, initialColor, initialWidth);
+    }
+
     private void init(Context context) {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
         
@@ -108,6 +118,28 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setColor(Color.BLACK);
         float density = getResources().getDisplayMetrics().density;
         mPaint.setStrokeWidth(5.0f * density);
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setDither(true);
+        
+        mPaintCanvas = new Canvas();
+        mPaintCanvas.setBitmap(mBitmap);
+    }
+
+    private void init(Context context, int initialColor, float initialWidth) {
+        setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        
+        RenderUtils.initRendLib();
+        
+        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+        
+        getHolder().addCallback(this);
+        
+        // Initialize paint with optimal flags and initial parameters
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setColor(initialColor);
+        float density = getResources().getDisplayMetrics().density;
+        mPaint.setStrokeWidth(initialWidth * density);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
         mPaint.setDither(true);

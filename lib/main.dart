@@ -50,7 +50,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
 
     if (isPenEnabled) {
       // Small delay to ensure AndroidView is properly initialized
-      await Future.delayed(const Duration(seconds: 10));
+      await Future.delayed(const Duration(milliseconds: 2));
       _updatePenSettings();
     }
   }

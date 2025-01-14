@@ -1,6 +1,7 @@
 package com.example.pview
 
 import android.content.Context
+import android.graphics.Color
 import android.view.View
 import display.interactive.renderlib.RenderUtils
 import io.flutter.plugin.common.MethodCall
@@ -12,15 +13,11 @@ class CustomPlatformView(
     private val methodChannel: MethodChannel,
     creationParams: Map<String, Any>?
 ) : PlatformView, MethodChannel.MethodCallHandler {
-    private val rendLibView: RendLibSurfaceView = RendLibSurfaceView(context).apply {
-        creationParams?.let {
-            val color = it["color"] as? Int
-            val width = it["width"] as? Double
-            if (color != null && width != null) {
-                updatePenSettings(color, width.toFloat())
-            }
-        }
-    }
+    private val rendLibView: RendLibSurfaceView = RendLibSurfaceView(
+        context,
+        creationParams?.get("color") as? Int ?: Color.BLACK,
+        (creationParams?.get("width") as? Double)?.toFloat() ?: 5.0f
+    )
 
     init {
         methodChannel.setMethodCallHandler(this)

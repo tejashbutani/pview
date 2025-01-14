@@ -15,13 +15,17 @@ class CustomPlatformView(
 ) : PlatformView, MethodChannel.MethodCallHandler {
     private val rendLibView: RendLibSurfaceView = RendLibSurfaceView(
         context,
-        creationParams?.get("color") as? Int ?: Color.BLACK,
+        (creationParams?.get("color") as? Number)?.toInt() ?: Color.BLACK,
         (creationParams?.get("width") as? Double)?.toFloat() ?: 5.0f
     )
 
     init {
         methodChannel.setMethodCallHandler(this)
         rendLibView.setMethodChannel(methodChannel)
+        val colorValue = creationParams?.get("color")
+        val widthValue = creationParams?.get("width")
+        android.util.Log.d("CustomPlatformView", "Color value: $colorValue (${colorValue?.javaClass})")
+        android.util.Log.d("CustomPlatformView", "Width value: $widthValue (${widthValue?.javaClass})")
     }
 
     override fun getView(): View {

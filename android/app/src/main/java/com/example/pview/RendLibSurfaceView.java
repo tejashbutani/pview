@@ -198,7 +198,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mLastYMap.put(pointerId, startY);
 
                 mPaintCanvas.drawPoint(startX, startY, mPaint);
-                Log.w("onTouchEvent", "ACTION_POINTER_DOWN " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                // Log.w("onTouchEvent", "ACTION_POINTER_DOWN " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -221,7 +221,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                         mLastYMap.put(id, y);
                     }
                 }
-                Log.w("onTouchEvent", "ACTION_POINTER_MOVE " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                // Log.w("onTouchEvent", "ACTION_POINTER_MOVE " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -251,7 +251,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mStrokePointsMap.remove(pointerId);
                 mLastXMap.remove(pointerId);
                 mLastYMap.remove(pointerId);
-                Log.w("onTouchEvent", "ACTION_POINTER_UP " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                // Log.w("onTouchEvent", "ACTION_POINTER_UP " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_CANCEL:
@@ -271,15 +271,15 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         float density = getResources().getDisplayMetrics().density;
         float physicalWidth = width * density;
         
-        Log.d("PenSettings", "Before update - Current color: " + mPaint.getColor() + 
-                           ", Current width: " + mPaint.getStrokeWidth() + " px");
+        // Log.d("PenSettings", "Before update - Current color: " + mPaint.getColor() + 
+        //                    ", Current width: " + mPaint.getStrokeWidth() + " px");
         
         mPaint.setColor(color);
         mPaint.setStrokeWidth(physicalWidth);
         
-        Log.d("PenSettings", "After update - New color: " + color + 
-                           ", New width: " + width + " dp" +
-                           ", Screen density: " + density +
-                           ", Physical width: " + physicalWidth + " px");
+        // Log.d("PenSettings", "After update - New color: " + color + 
+        //                    ", New width: " + width + " dp" +
+        //                    ", Screen density: " + density +
+        //                    ", Physical width: " + physicalWidth + " px");
     }
 }

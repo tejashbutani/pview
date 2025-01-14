@@ -43,16 +43,10 @@ class _DrawingScreenState extends State<DrawingScreen> {
   static const double minStrokeWidth = 1.0;
   static const double maxStrokeWidth = 10.0;
 
-  Future<void> _togglePen() async {
+  _togglePen() {
     setState(() {
       isPenEnabled = !isPenEnabled;
     });
-
-    if (isPenEnabled) {
-      // Small delay to ensure AndroidView is properly initialized
-      await Future.delayed(const Duration(milliseconds: 2));
-      _updatePenSettings();
-    }
   }
 
   @override
@@ -183,12 +177,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
 
   void _updatePenSettings() {
     if (_channel != null) {
-      print('Flutter: Updating pen settings - Color: ${currentColor.value}, Width: $currentWidth');
+      // print('Flutter: Updating pen settings - Color: ${currentColor.value}, Width: $currentWidth');
       _channel!.invokeMethod('updatePenSettings', {
         'color': currentColor.value,
         'width': currentWidth,
       }).then((_) {
-        print('Flutter: Pen settings update completed');
+        // print('Flutter: Pen settings update completed');
       }).catchError((error) {
         print('Flutter: Error updating pen settings: $error');
       });

@@ -24,8 +24,8 @@ class CustomPlatformView(
         rendLibView.setMethodChannel(methodChannel)
         val colorValue = creationParams?.get("color")
         val widthValue = creationParams?.get("width")
-        android.util.Log.d("CustomPlatformView", "Color value: $colorValue (${colorValue?.javaClass})")
-        android.util.Log.d("CustomPlatformView", "Width value: $widthValue (${widthValue?.javaClass})")
+        // android.util.Log.d("CustomPlatformView", "Color value: $colorValue (${colorValue?.javaClass})")
+        // android.util.Log.d("CustomPlatformView", "Width value: $widthValue (${widthValue?.javaClass})")
     }
 
     override fun getView(): View {
@@ -41,12 +41,12 @@ class CustomPlatformView(
             "updatePenSettings" -> {
                 val color = (call.argument<Number>("color"))?.toInt()
                 val width = call.argument<Double>("width")
-                android.util.Log.d("PenSettings", "Received method call - Color: $color, Width: $width")
+                // android.util.Log.d("PenSettings", "Received method call - Color: $color, Width: $width")
                 if (color != null && width != null) {
                     rendLibView.updatePenSettings(color, width.toFloat())
                     result.success(null)
                 } else {
-                    android.util.Log.e("PenSettings", "Invalid arguments - Color: $color, Width: $width")
+                    // android.util.Log.e("PenSettings", "Invalid arguments - Color: $color, Width: $width")
                     result.error("INVALID_ARGUMENTS", "Color or width is null", null)
                 }
             }

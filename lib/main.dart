@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pview/models/stroke.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,6 +38,8 @@ class _DrawingScreenState extends State<DrawingScreen> {
   bool isPenEnabled = false;
   List<Stroke> strokes = [];
   Size? androidViewSize;
+  Color currentColor = Colors.black;
+  double currentWidth = 5.0;
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +59,74 @@ class _DrawingScreenState extends State<DrawingScreen> {
             if (isPenEnabled)
               AndroidView(
                 viewType: 'custom_canvas_view',
+                creationParams: {
+                  'color': currentColor.value,
+                  'width': currentWidth,
+                },
+                creationParamsCodec: const StandardMessageCodec(),
                 onPlatformViewCreated: (int id) {
                   _channel = MethodChannel('custom_canvas_view_$id');
                   _channel?.setMethodCallHandler(_handleMethodCall);
                 },
               ),
+            Positioned(
+              bottom: 40,
+              right: 200,
+              child: Row(
+                children: [
+                  FloatingActionButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Pick a color'),
+                            content: SingleChildScrollView(
+                              child: ColorPicker(
+                                pickerColor: currentColor,
+                                onColorChanged: (Color color) {
+                                  setState(() {
+                                    currentColor = color;
+                                  });
+                                },
+                                showLabel: true,
+                                pickerAreaHeightPercent: 0.8,
+                              ),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('Done'),
+                                onPressed: () {
+                                  _updatePenSettings();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    backgroundColor: currentColor,
+                    child: const Icon(Icons.color_lens, color: Colors.white),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        currentWidth = currentWidth == 5.0 ? 10.0 : 5.0;
+                        _updatePenSettings();
+                      });
+                    },
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.line_weight,
+                      color: Colors.black,
+                      size: currentWidth * 2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Positioned(
               bottom: 40,
               right: 120,
@@ -99,6 +165,22 @@ class _DrawingScreenState extends State<DrawingScreen> {
     );
   }
 
+  void _updatePenSettings() {
+    if (_channel != null) {
+      print('Flutter: Updating pen settings - Color: ${currentColor.value}, Width: $currentWidth');
+      _channel!.invokeMethod('updatePenSettings', {
+        'color': currentColor.value,
+        'width': currentWidth,
+      }).then((_) {
+        print('Flutter: Pen settings update completed');
+      }).catchError((error) {
+        print('Flutter: Error updating pen settings: $error');
+      });
+    } else {
+      print('Flutter: Channel is null, cannot update pen settings');
+    }
+  }
+
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case 'onStrokeComplete':
@@ -106,7 +188,11 @@ class _DrawingScreenState extends State<DrawingScreen> {
           final strokeData = Map<String, dynamic>.from(call.arguments);
           final stroke = Stroke.fromJson(strokeData);
           setState(() {
-            strokes.add(stroke);
+            strokes.add(Stroke(
+              points: stroke.points,
+              color: currentColor,
+              width: currentWidth,
+            ));
           });
           print('Received stroke with ${stroke.points.length} points'); // Debug log
         } catch (e) {
@@ -139,32 +225,10 @@ class ToolsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
 
       final path = Path();
+      path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
 
-      if (androidViewSize != null) {
-        final scaleX = size.width / androidViewSize!.width;
-        final scaleY = size.height / androidViewSize!.height;
-        final scale = (scaleX + scaleY) / 2;
-
-        paint.strokeWidth = stroke.width * scale;
-
-        final firstPoint = stroke.points[0];
-        path.moveTo(
-          firstPoint.dx * scaleX,
-          firstPoint.dy * scaleY,
-        );
-
-        for (int i = 1; i < stroke.points.length; i++) {
-          final point = stroke.points[i];
-          path.lineTo(
-            point.dx * scaleX,
-            point.dy * scaleY,
-          );
-        }
-      } else {
-        path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
-        for (int i = 1; i < stroke.points.length; i++) {
-          path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
-        }
+      for (int i = 1; i < stroke.points.length; i++) {
+        path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
       }
 
       canvas.drawPath(path, paint);
@@ -172,5 +236,7 @@ class ToolsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ToolsPainter oldDelegate) => true;
+  bool shouldRepaint(ToolsPainter oldDelegate) {
+    return true;
+  }
 }

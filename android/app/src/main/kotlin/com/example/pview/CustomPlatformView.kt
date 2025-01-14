@@ -9,9 +9,18 @@ import io.flutter.plugin.platform.PlatformView
 
 class CustomPlatformView(
     context: Context,
-    private val methodChannel: MethodChannel
+    private val methodChannel: MethodChannel,
+    creationParams: Map<String, Any>?
 ) : PlatformView, MethodChannel.MethodCallHandler {
-    private val rendLibView: RendLibSurfaceView = RendLibSurfaceView(context)
+    private val rendLibView: RendLibSurfaceView = RendLibSurfaceView(context).apply {
+        creationParams?.let {
+            val color = it["color"] as? Int
+            val width = it["width"] as? Double
+            if (color != null && width != null) {
+                updatePenSettings(color, width.toFloat())
+            }
+        }
+    }
 
     init {
         methodChannel.setMethodCallHandler(this)
@@ -28,6 +37,18 @@ class CustomPlatformView(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "updatePenSettings" -> {
+                val color = (call.argument<Number>("color"))?.toInt()
+                val width = call.argument<Double>("width")
+                android.util.Log.d("PenSettings", "Received method call - Color: $color, Width: $width")
+                if (color != null && width != null) {
+                    rendLibView.updatePenSettings(color, width.toFloat())
+                    result.success(null)
+                } else {
+                    android.util.Log.e("PenSettings", "Invalid arguments - Color: $color, Width: $width")
+                    result.error("INVALID_ARGUMENTS", "Color or width is null", null)
+                }
+            }
             "clear" -> {
                 RenderUtils.clearBitmapContent()
                 result.success(null)

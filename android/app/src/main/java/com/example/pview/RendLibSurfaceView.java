@@ -315,7 +315,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void clearCanvas() {
+        /** only for HIKVISION */
 //        RenderUtils.clearBitmapContent();
+
+        /** only for Delta */
         try {
             mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
         } catch (Exception ex) {

@@ -161,6 +161,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
                   setState(() {
                     strokes.clear();
                   });
+                  _channel?.invokeMethod('clear');
                 },
                 backgroundColor: Colors.white,
                 child: const Icon(

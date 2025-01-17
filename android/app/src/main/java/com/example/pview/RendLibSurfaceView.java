@@ -282,4 +282,8 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         //                    ", Screen density: " + density +
         //                    ", Physical width: " + physicalWidth + " px");
     }
+
+    public void clearCanvas(){
+        RenderUtils.clearBitmapContent();
+    }
 }

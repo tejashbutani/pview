@@ -1,5 +1,7 @@
 package com.example.pview;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -14,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
@@ -22,8 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import display.interactive.renderlib.RenderUtils;
 import io.flutter.plugin.common.MethodChannel;
+//import display.interactive.renderlib.RenderUtils;
+import com.nomivision.sys.WhiteBoardSpeedup;
+
 
 /**
  * @ClassName: display.interactive.rendlibtools.view
@@ -32,18 +35,20 @@ import io.flutter.plugin.common.MethodChannel;
  * @Date: 2024/11/23
  */
 public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+
+    /** only For Delta */
+    private WhiteBoardSpeedup mWhiteBoardSpeedup;
     
     private SurfaceHolder mHolder;
 
     private Bitmap mBitmap;
-
 
     private int mScreenWidth;
 
     private int mScreenHeight;
 
     /**
-     * Drawing Camvas
+     * Drawing Canvas
      */
     private Canvas mPaintCanvas;
 
@@ -100,17 +105,27 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 
     private void init(Context context) {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        
-        RenderUtils.initRendLib();
-
 //        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
 //        mScreenWidth = resolution[0];
 //        mScreenHeight = resolution[1];
-        
-        // Create bitmap with optimal config for drawing
-       mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
-        // mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
-        
+
+        /** only for Testing on Tablet */
+//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+
+        /** only for HIKVISION */
+//        RenderUtils.initRendLib();
+//        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+
+        /** only for Delta */
+        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+        try {
+            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+        } catch (Exception ex) {
+            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+            ex.printStackTrace();
+        }
+        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
+
         getHolder().addCallback(this);
         
         // Initialize paint with optimal flags
@@ -128,10 +143,26 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 
     private void init(Context context, int initialColor, float initialWidth) {
         setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        
-        RenderUtils.initRendLib();
-        
-        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+//        int[] resolution = RenderUtils.getDeviceNativeResolution(context);
+//        mScreenWidth = resolution[0];
+//        mScreenHeight = resolution[1];
+
+        /** only for Testing on Tablet */
+//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+
+        /** only for HIKVISION */
+//        RenderUtils.initRendLib();
+//        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
+
+        /** only for Delta */
+        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+        try {
+            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+        } catch (Exception ex) {
+            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+            ex.printStackTrace();
+        }
+        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
         
         getHolder().addCallback(this);
         
@@ -169,7 +200,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-       RenderUtils.clearBitmapContent();
+        clearCanvas();
     }
 
 
@@ -283,7 +314,13 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         //                    ", Physical width: " + physicalWidth + " px");
     }
 
-    public void clearCanvas(){
-        RenderUtils.clearBitmapContent();
+    public void clearCanvas() {
+//        RenderUtils.clearBitmapContent();
+        try {
+            mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
+        } catch (Exception ex) {
+            Log.e(TAG, "Failed to clear canvas: " + ex.toString());
+            ex.printStackTrace();
+        }
     }
 }

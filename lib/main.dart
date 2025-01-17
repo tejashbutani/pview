@@ -202,7 +202,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
             strokes.add(Stroke(
               points: stroke.points,
               color: currentColor,
-              width: currentWidth,
+              width: currentWidth + 1,
             ));
           });
           print('Received stroke with ${stroke.points.length} points'); // Debug log

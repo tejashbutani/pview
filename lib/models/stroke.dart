@@ -8,7 +8,7 @@ class Stroke {
   Stroke({
     required this.points,
     this.color = Colors.black,
-    this.width = 5.0,
+    this.width = 50.0,
   });
 
   Map<String, dynamic> toJson() {

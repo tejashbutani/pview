@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pview/models/stroke.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:pview/rainbow.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,8 +20,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: DrawingScreen(),
+      home:  Scaffold(
+        body: RainbowDrawScreen(),
       ),
     );
   }
@@ -251,3 +252,4 @@ class ToolsPainter extends CustomPainter {
     return true;
   }
 }
+

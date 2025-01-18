@@ -25,7 +25,7 @@ import java.util.Map;
 
 import io.flutter.plugin.common.MethodChannel;
 //import display.interactive.renderlib.RenderUtils;
-import com.nomivision.sys.WhiteBoardSpeedup;
+ import com.nomivision.sys.WhiteBoardSpeedup;
 
 
 /**
@@ -110,21 +110,21 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        mScreenHeight = resolution[1];
 
         /** only for Testing on Tablet */
-//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+       mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
 
         /** only for HIKVISION */
 //        RenderUtils.initRendLib();
 //        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
 
         /** only for Delta */
-        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
-        try {
-            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
-        } catch (Exception ex) {
-            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
-            ex.printStackTrace();
-        }
-        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
+        // mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+        // try {
+        //     mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+        // } catch (Exception ex) {
+        //     Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+        //     ex.printStackTrace();
+        // }
+        // mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
 
         getHolder().addCallback(this);
         
@@ -148,22 +148,22 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        mScreenHeight = resolution[1];
 
         /** only for Testing on Tablet */
-//        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
 
         /** only for HIKVISION */
 //        RenderUtils.initRendLib();
 //        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
 
         /** only for Delta */
-        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
-        try {
-            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
-        } catch (Exception ex) {
-            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
-            ex.printStackTrace();
-        }
-        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
-        
+//        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+//        try {
+//            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+//        } catch (Exception ex) {
+//            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+//            ex.printStackTrace();
+//        }
+//        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
+//
         getHolder().addCallback(this);
         
         // Initialize paint with optimal flags and initial parameters
@@ -319,11 +319,11 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        RenderUtils.clearBitmapContent();
 
         /** only for Delta */
-        try {
-            mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
-        } catch (Exception ex) {
-            Log.e(TAG, "Failed to clear canvas: " + ex.toString());
-            ex.printStackTrace();
-        }
+        // try {
+        //     mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
+        // } catch (Exception ex) {
+        //     Log.e(TAG, "Failed to clear canvas: " + ex.toString());
+        //     ex.printStackTrace();
+        // }
     }
 }

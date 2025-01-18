@@ -9,8 +9,8 @@ class RainbowDrawScreen extends StatefulWidget {
 }
 
 class _RainbowDrawScreenState extends State<RainbowDrawScreen> {
-  final List<List<Offset>> strokes = [];
-  List<Offset>? currentStroke;
+  final List<RainBowStroke> strokes = [];
+  RainBowStroke? currentStroke;
   Size androidViewSize = const Size(3860, 2160);
 
   @override
@@ -19,13 +19,13 @@ class _RainbowDrawScreenState extends State<RainbowDrawScreen> {
       body: GestureDetector(
         onPanStart: (details) {
           setState(() {
-            currentStroke = [details.localPosition];
+            currentStroke = RainBowStroke(points: [details.localPosition]);
             strokes.add(currentStroke!);
           });
         },
         onPanUpdate: (details) {
           setState(() {
-            currentStroke!.add(details.localPosition);
+            currentStroke!.points.add(details.localPosition);
           });
         },
         onPanEnd: (details) {
@@ -35,7 +35,7 @@ class _RainbowDrawScreenState extends State<RainbowDrawScreen> {
         },
         child: CustomPaint(
           painter: ToolsPainterr(
-            strokes: strokes.map((points) => RainBowStroke(points: points)).toList(),
+            strokes: strokes,
             androidViewSize: androidViewSize,
           ),
           size: const Size(3860, 2160),
@@ -74,21 +74,20 @@ class ToolsPainterr extends CustomPainter {
         const Color.fromARGB(255, 255, 0, 0), // Red
       ];
 
+      final rotatedColors = [...rainbowColors.sublist(stroke.colorStartIndex), ...rainbowColors.sublist(0, stroke.colorStartIndex)];
+
       final colorsPerSegment = pointsPerRainbow ~/ rainbowColors.length;
 
       for (int i = 1; i < stroke.points.length; i++) {
-        // Calculate which rainbow cycle and color segment we're in
         final rainbowCycle = i ~/ pointsPerRainbow;
         final segmentIndex = (i % pointsPerRainbow) ~/ colorsPerSegment;
-        final nextSegmentIndex = ((i % pointsPerRainbow) ~/ colorsPerSegment + 1) % rainbowColors.length;
+        final nextSegmentIndex = ((i % pointsPerRainbow) ~/ colorsPerSegment + 1) % rotatedColors.length;
 
-        // Calculate progress within current color segment
         final segmentProgress = ((i % pointsPerRainbow) % colorsPerSegment) / colorsPerSegment;
 
-        // Create gradient color
         final currentColor = Color.lerp(
-          rainbowColors[segmentIndex],
-          rainbowColors[nextSegmentIndex],
+          rotatedColors[segmentIndex],
+          rotatedColors[nextSegmentIndex],
           segmentProgress,
         )!;
 
@@ -118,16 +117,19 @@ class ToolsPainterr extends CustomPainter {
 class RainBowStroke {
   final List<Offset> points;
   final double width;
+  final int colorStartIndex;
 
   RainBowStroke({
     required this.points,
     this.width = 30.0,
-  });
+    int? colorStartIndex,
+  }) : colorStartIndex = colorStartIndex ?? (DateTime.now().millisecondsSinceEpoch % 7);
 
   Map<String, dynamic> toJson() {
     return {
       'points': points.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
       'width': width,
+      'colorStartIndex': colorStartIndex,
     };
   }
 
@@ -135,6 +137,7 @@ class RainBowStroke {
     return RainBowStroke(
       points: (json['points'] as List).map((p) => Offset(p['x'] as double, p['y'] as double)).toList(),
       width: json['width'] as double,
+      colorStartIndex: json['colorStartIndex'] as int,
     );
   }
 }

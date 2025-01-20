@@ -76,19 +76,20 @@ class ToolsPainterr extends CustomPainter {
 
       final rotatedColors = [...rainbowColors.sublist(stroke.colorStartIndex), ...rainbowColors.sublist(0, stroke.colorStartIndex)];
 
-      final colorsPerSegment = pointsPerRainbow ~/ rainbowColors.length;
-
       for (int i = 1; i < stroke.points.length; i++) {
-        final rainbowCycle = i ~/ pointsPerRainbow;
-        final segmentIndex = (i % pointsPerRainbow) ~/ colorsPerSegment;
-        final nextSegmentIndex = ((i % pointsPerRainbow) ~/ colorsPerSegment + 1) % rotatedColors.length;
+        // Calculate the position within the rainbow cycle
+        final position = (i % pointsPerRainbow) / pointsPerRainbow;
 
-        final segmentProgress = ((i % pointsPerRainbow) % colorsPerSegment) / colorsPerSegment;
+        // Calculate the color indices and interpolation factor
+        final colorIndex = (position * rotatedColors.length).floor();
+        final nextColorIndex = (colorIndex + 1) % rotatedColors.length;
+        final colorProgress = (position * rotatedColors.length) - colorIndex;
 
+        // Interpolate between colors
         final currentColor = Color.lerp(
-          rotatedColors[segmentIndex],
-          rotatedColors[nextSegmentIndex],
-          segmentProgress,
+          rotatedColors[colorIndex],
+          rotatedColors[nextColorIndex],
+          colorProgress,
         )!;
 
         final paint = Paint()
@@ -98,7 +99,6 @@ class ToolsPainterr extends CustomPainter {
           ..strokeJoin = StrokeJoin.round
           ..style = PaintingStyle.stroke;
 
-        // Draw line segment with current color
         canvas.drawLine(
           stroke.points[i - 1],
           stroke.points[i],

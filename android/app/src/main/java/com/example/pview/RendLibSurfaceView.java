@@ -186,7 +186,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             Canvas canvas = mHolder.lockCanvas();
             // Set the background of the acceleration bitmap to transparent
             canvas.drawColor(Color.WHITE);
-            mHolder.setFormat(PixelFormat.OPAQUE);
+            mHolder.setFormat(PixelFormat.TRANSPARENT);
             mHolder.unlockCanvasAndPost(canvas);
         } else {
             Log.w("TestMXW", "surfaceHolder is nulll !!!");

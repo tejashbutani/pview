@@ -37,7 +37,7 @@ import io.flutter.plugin.common.MethodChannel;
 public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
     /** only For Delta */
-    private WhiteBoardSpeedup mWhiteBoardSpeedup;
+//    private WhiteBoardSpeedup mWhiteBoardSpeedup;
     
     private SurfaceHolder mHolder;
 
@@ -186,7 +186,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             Canvas canvas = mHolder.lockCanvas();
             // Set the background of the acceleration bitmap to transparent
             canvas.drawColor(Color.WHITE);
-            mHolder.setFormat(PixelFormat.TRANSPARENT);
+            mHolder.setFormat(PixelFormat.OPAQUE);
             mHolder.unlockCanvasAndPost(canvas);
         } else {
             Log.w("TestMXW", "surfaceHolder is nulll !!!");
@@ -229,7 +229,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mLastYMap.put(pointerId, startY);
 
                 mPaintCanvas.drawPoint(startX, startY, mPaint);
-                // Log.w("onTouchEvent", "ACTION_POINTER_DOWN " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                 Log.w("onTouchEvent", "ACTION_POINTER_DOWN " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -252,7 +252,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                         mLastYMap.put(id, y);
                     }
                 }
-                // Log.w("onTouchEvent", "ACTION_POINTER_MOVE " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                 Log.w("onTouchEvent", "ACTION_POINTER_MOVE " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -282,7 +282,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mStrokePointsMap.remove(pointerId);
                 mLastXMap.remove(pointerId);
                 mLastYMap.remove(pointerId);
-                // Log.w("onTouchEvent", "ACTION_POINTER_UP " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                 Log.w("onTouchEvent", "ACTION_POINTER_UP " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_CANCEL:

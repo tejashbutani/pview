@@ -4,6 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:pview/models/stroke.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+enum PenType {
+  normal,
+  highlighter,
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -40,8 +45,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
   Size? androidViewSize;
   Color currentColor = Colors.black;
   double currentWidth = 5.0;
+  PenType currentPenType = PenType.normal;
   static const double minStrokeWidth = 1.0;
-  static const double maxStrokeWidth = 10.0;
+  static const double maxStrokeWidth = 20.0;
+  static const double highlighterWidth = 12.0;
+  static const defaultHighlighterColor = Color(0xFFF2F200);
+  static const defaultHighlighterAlpha = 75;
 
   _togglePen() {
     setState(() {
@@ -65,7 +74,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
               size: const Size(3860, 2160),
             ),
             if (isPenEnabled)
-            AndroidView(
+              AndroidView(
                 viewType: 'custom_canvas_view',
                 creationParams: {
                   'color': currentColor.value,
@@ -82,6 +91,34 @@ class _DrawingScreenState extends State<DrawingScreen> {
               right: 200,
               child: Row(
                 children: [
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        currentPenType = PenType.normal;
+                        _updatePenSettings();
+                      });
+                    },
+                    backgroundColor: currentPenType == PenType.normal ? Colors.black : Colors.white,
+                    child: Icon(
+                      Icons.edit,
+                      color: currentPenType == PenType.normal ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        currentPenType = PenType.highlighter;
+                        _updatePenSettings();
+                      });
+                    },
+                    backgroundColor: currentPenType == PenType.highlighter ? Colors.yellow[200] : Colors.white,
+                    child: Icon(
+                      Icons.highlight_alt,
+                      color: currentPenType == PenType.highlighter ? Colors.orange : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   FloatingActionButton(
                     onPressed: () {
                       showDialog(
@@ -178,12 +215,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
 
   void _updatePenSettings() {
     if (_channel != null) {
-      // print('Flutter: Updating pen settings - Color: ${currentColor.value}, Width: $currentWidth');
+      final color = currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor;
+      final width = currentPenType == PenType.highlighter ? highlighterWidth : currentWidth;
+
       _channel!.invokeMethod('updatePenSettings', {
-        'color': currentColor.value,
-        'width': currentWidth,
-      }).then((_) {
-        // print('Flutter: Pen settings update completed');
+        'color': color.value,
+        'width': width,
       }).catchError((error) {
         print('Flutter: Error updating pen settings: $error');
       });
@@ -201,13 +238,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
           setState(() {
             strokes.add(Stroke(
               points: stroke.points,
-              color: Colors.red,
-              width: currentWidth + 3,
+              color: currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor,
+              width: currentPenType == PenType.highlighter ? highlighterWidth : currentWidth,
             ));
           });
-          print('Received stroke with ${stroke.points.length} points'); // Debug log
         } catch (e) {
-          print('Error processing stroke data: $e'); // Debug log
+          print('Error processing stroke data: $e');
         }
         break;
     }

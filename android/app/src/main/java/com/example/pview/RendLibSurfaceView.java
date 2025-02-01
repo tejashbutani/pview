@@ -135,7 +135,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setStrokeWidth(5.0f * density);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setDither(true);
+        mPaint.setAntiAlias(true);
+        mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
         
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
@@ -173,7 +176,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setStrokeWidth(initialWidth * density);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setDither(true);
+        mPaint.setAntiAlias(true);
+        mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
         
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
@@ -186,7 +192,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             Canvas canvas = mHolder.lockCanvas();
             // Changed from TRANSPARENT to TRANSLUCENT for better compatibility
             mHolder.setFormat(PixelFormat.TRANSLUCENT);
-            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(Color.GREEN);
             // Draw any existing bitmap content
             canvas.drawBitmap(mBitmap, 0, 0, null);
             mHolder.unlockCanvasAndPost(canvas);
@@ -246,9 +252,13 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                     Float lastY = mLastYMap.get(id);
                     
                     if (currentPath != null && currentPoints != null && lastX != null && lastY != null) {
-                        currentPath.lineTo(x, y);
+                        float midX = (lastX + x) / 2;
+                        float midY = (lastY + y) / 2;
+                        
+                        currentPath.quadTo(lastX, lastY, midX, midY);
                         currentPoints.add(new PointF(x, y));
-                        mPaintCanvas.drawLine(lastX, lastY, x, y, mPaint);
+                        
+                        mPaintCanvas.drawPath(currentPath, mPaint);
                         
                         mLastXMap.put(id, x);
                         mLastYMap.put(id, y);
@@ -309,21 +319,24 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     }
 
     public void updatePenSettings(int color, float width) {
-        // width parameter is in logical pixels (dp)
-        // need to convert to physical pixels by multiplying with density
         float density = getResources().getDisplayMetrics().density;
         float physicalWidth = width * density;
-        
-        // Log.d("PenSettings", "Before update - Current color: " + mPaint.getColor() + 
-        //                    ", Current width: " + mPaint.getStrokeWidth() + " px");
         
         mPaint.setColor(color);
         mPaint.setStrokeWidth(physicalWidth);
         
-        // Log.d("PenSettings", "After update - New color: " + color + 
-        //                    ", New width: " + width + " dp" +
-        //                    ", Screen density: " + density +
-        //                    ", Physical width: " + physicalWidth + " px");
+        if (Color.alpha(color) < 255) {
+            mPaint.setStrokeCap(Paint.Cap.SQUARE);
+            mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setPathEffect(new android.graphics.CornerPathEffect(60f));
+            mPaint.setXfermode(new android.graphics.PorterDuffXfermode(
+                android.graphics.PorterDuff.Mode.MULTIPLY));
+        } else {
+            mPaint.setStrokeCap(Paint.Cap.ROUND);
+            mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
+            mPaint.setXfermode(null);
+        }
     }
 
     public void clearCanvas() {

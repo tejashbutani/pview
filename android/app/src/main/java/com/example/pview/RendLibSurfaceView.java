@@ -10,6 +10,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -135,7 +137,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setStrokeWidth(5.0f * density);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setDither(true);
+        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+        mPaint.setAlpha(255);
         
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
@@ -173,7 +178,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setStrokeWidth(initialWidth * density);
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeCap(Paint.Cap.ROUND);
+        mPaint.setStrokeJoin(Paint.Join.ROUND);
         mPaint.setDither(true);
+        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+        mPaint.setAlpha(255);
         
         mPaintCanvas = new Canvas();
         mPaintCanvas.setBitmap(mBitmap);
@@ -244,9 +252,9 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                     Float lastY = mLastYMap.get(id);
                     
                     if (currentPath != null && currentPoints != null && lastX != null && lastY != null) {
-                        currentPath.lineTo(x, y);
+                        currentPath.quadTo(lastX, lastY, (x + lastX) / 2, (y + lastY) / 2);
                         currentPoints.add(new PointF(x, y));
-                        mPaintCanvas.drawLine(lastX, lastY, x, y, mPaint);
+                        mPaintCanvas.drawPath(currentPath, mPaint);
                         
                         mLastXMap.put(id, x);
                         mLastYMap.put(id, y);

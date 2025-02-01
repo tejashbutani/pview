@@ -56,14 +56,17 @@ class ToolsPainterr extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Calculate the diagonal length of the screen as a reference
+    final screenDiagonal = size.width.abs() + size.height.abs();
+    // Use a larger fraction for smoother transitions
+    final rainbowCycleLength = screenDiagonal / 2; // Made cycle longer for smoother transitions
+
     for (final stroke in strokes) {
       if (stroke.points.length < 2) continue;
 
       final path = Path();
       path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
 
-      // Create segments of 70 points for rainbow effect
-      const pointsPerRainbow = 70;
       final rainbowColors = [
         const Color.fromARGB(255, 138, 43, 226), // Violet
         const Color.fromARGB(255, 75, 0, 130), // Indigo
@@ -76,34 +79,71 @@ class ToolsPainterr extends CustomPainter {
 
       final rotatedColors = [...rainbowColors.sublist(stroke.colorStartIndex), ...rainbowColors.sublist(0, stroke.colorStartIndex)];
 
-      for (int i = 1; i < stroke.points.length; i++) {
-        // Calculate the position within the rainbow cycle
-        final position = (i % pointsPerRainbow) / pointsPerRainbow;
+      // Draw the stroke as a continuous path instead of individual lines
+      final strokePath = Path();
+      strokePath.moveTo(stroke.points[0].dx, stroke.points[0].dy);
 
-        // Calculate the color indices and interpolation factor
-        final colorIndex = (position * rotatedColors.length).floor();
+      // Use quadratic bezier curves for smoother path
+      for (int i = 1; i < stroke.points.length - 1; i++) {
+        final p0 = stroke.points[i - 1];
+        final p1 = stroke.points[i];
+        final p2 = stroke.points[i + 1];
+
+        // Calculate control points for smooth curve
+        final controlPoint = Offset(
+          p1.dx,
+          p1.dy,
+        );
+
+        final endPoint = Offset(
+          (p1.dx + p2.dx) / 2,
+          (p1.dy + p2.dy) / 2,
+        );
+
+        strokePath.quadraticBezierTo(
+          controlPoint.dx,
+          controlPoint.dy,
+          endPoint.dx,
+          endPoint.dy,
+        );
+
+        // Calculate position for coloring using interpolated points
+        final absolutePosition = (p1.dx.abs() + p1.dy.abs() + endPoint.dx.abs() + endPoint.dy.abs()) / 2;
+        final position = (absolutePosition % rainbowCycleLength) / rainbowCycleLength;
+
+        // Use double interpolation for smoother color transitions
+        final colorPosition = position * (rotatedColors.length - 1);
+        final colorIndex = colorPosition.floor();
         final nextColorIndex = (colorIndex + 1) % rotatedColors.length;
-        final colorProgress = (position * rotatedColors.length) - colorIndex;
+        final colorProgress = colorPosition - colorIndex;
 
-        // Interpolate between colors
-        final currentColor = Color.lerp(
+        // Double interpolation for smoother transitions
+        final midColor1 = Color.lerp(
           rotatedColors[colorIndex],
           rotatedColors[nextColorIndex],
           colorProgress,
         )!;
+        final midColor2 = Color.lerp(
+          rotatedColors[nextColorIndex],
+          rotatedColors[(nextColorIndex + 1) % rotatedColors.length],
+          colorProgress,
+        )!;
+        final finalColor = Color.lerp(midColor1, midColor2, colorProgress / 2)!;
 
         final paint = Paint()
-          ..color = currentColor
+          ..color = finalColor
           ..strokeWidth = stroke.width
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round
-          ..style = PaintingStyle.stroke;
+          ..style = PaintingStyle.stroke
+          ..isAntiAlias = true; // Ensure anti-aliasing is enabled
 
-        canvas.drawLine(
-          stroke.points[i - 1],
-          stroke.points[i],
-          paint,
-        );
+        // Draw segment
+        canvas.drawPath(strokePath, paint);
+
+        // Start new path from current endpoint
+        strokePath.reset();
+        strokePath.moveTo(endPoint.dx, endPoint.dy);
       }
     }
   }

@@ -184,12 +184,14 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         if(surfaceHolder != null) {
             mHolder = surfaceHolder;
             Canvas canvas = mHolder.lockCanvas();
-            // Set the background of the acceleration bitmap to transparent
+            // Changed from TRANSPARENT to TRANSLUCENT for better compatibility
+            mHolder.setFormat(PixelFormat.TRANSLUCENT);
             canvas.drawColor(Color.WHITE);
-            mHolder.setFormat(PixelFormat.TRANSPARENT);
+            // Draw any existing bitmap content
+            canvas.drawBitmap(mBitmap, 0, 0, null);
             mHolder.unlockCanvasAndPost(canvas);
         } else {
-            Log.w("TestMXW", "surfaceHolder is nulll !!!");
+            Log.w("TestMXW", "surfaceHolder is null !!!");
         }
     }
 
@@ -291,6 +293,16 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mLastXMap.clear();
                 mLastYMap.clear();
                 break;
+        }
+        
+        // After each touch event, update the screen
+        if (mHolder != null) {
+            Canvas canvas = mHolder.lockCanvas();
+            if (canvas != null) {
+                canvas.drawColor(Color.WHITE);  // Clear the canvas
+                canvas.drawBitmap(mBitmap, 0, 0, null);  // Draw the bitmap
+                mHolder.unlockCanvasAndPost(canvas);
+            }
         }
         
         return true;

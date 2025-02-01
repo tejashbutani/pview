@@ -65,7 +65,7 @@ class _DrawingScreenState extends State<DrawingScreen> {
               size: const Size(3860, 2160),
             ),
             if (isPenEnabled)
-              AndroidView(
+            AndroidView(
                 viewType: 'custom_canvas_view',
                 creationParams: {
                   'color': currentColor.value,
@@ -201,8 +201,8 @@ class _DrawingScreenState extends State<DrawingScreen> {
           setState(() {
             strokes.add(Stroke(
               points: stroke.points,
-              color: currentColor,
-              width: currentWidth + 1,
+              color: Colors.red,
+              width: currentWidth + 3,
             ));
           });
           print('Received stroke with ${stroke.points.length} points'); // Debug log

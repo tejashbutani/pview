@@ -194,11 +194,17 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         if(surfaceHolder != null) {
             mHolder = surfaceHolder;
             Canvas canvas = mHolder.lockCanvas();
-            // Changed from TRANSPARENT to TRANSLUCENT for better compatibility
-            mHolder.setFormat(PixelFormat.TRANSLUCENT);
-            canvas.drawColor(Color.GREEN);
-            // Draw any existing bitmap content
-            canvas.drawBitmap(mBitmap, 0, 0, null);
+
+            //For Tablet
+//            mHolder.setFormat(PixelFormat.TRANSLUCENT);
+//            canvas.drawColor(Color.GREEN);
+//            canvas.drawBitmap(mBitmap, 0, 0, null);
+
+
+           //For IFP
+            canvas.drawColor(Color.WHITE);
+            mHolder.setFormat(PixelFormat.TRANSPARENT);
+
             mHolder.unlockCanvasAndPost(canvas);
         } else {
             Log.w("TestMXW", "surfaceHolder is null !!!");
@@ -308,16 +314,17 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mLastYMap.clear();
                 break;
         }
-        
-        // After each touch event, update the screen
-        if (mHolder != null) {
-            Canvas canvas = mHolder.lockCanvas();
-            if (canvas != null) {
-                canvas.drawColor(Color.WHITE);  // Clear the canvas
-                canvas.drawBitmap(mBitmap, 0, 0, null);  // Draw the bitmap
-                mHolder.unlockCanvasAndPost(canvas);
-            }
-        }
+
+        //For Tablet only
+//        // After each touch event, update the screen
+//        if (mHolder != null) {
+//            Canvas canvas = mHolder.lockCanvas();
+//            if (canvas != null) {
+//                canvas.drawColor(Color.WHITE);  // Clear the canvas
+//                canvas.drawBitmap(mBitmap, 0, 0, null);  // Draw the bitmap
+//                mHolder.unlockCanvasAndPost(canvas);
+//            }
+//        }
         
         return true;
     }

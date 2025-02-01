@@ -71,6 +71,7 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private boolean isDashed = false;
     private static final float DASH_LENGTH = 30f;  // Length of dash
     private static final float GAP_LENGTH = 20f;   // Length of gap (2:3 ratio)
+    private static final int defaultHighlighterAlpha = 75;
 
     public void setMethodChannel(MethodChannel channel) {
     this.methodChannel = channel;
@@ -196,14 +197,14 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             Canvas canvas = mHolder.lockCanvas();
 
             //For Tablet
-//            mHolder.setFormat(PixelFormat.TRANSLUCENT);
-//            canvas.drawColor(Color.GREEN);
-//            canvas.drawBitmap(mBitmap, 0, 0, null);
+            mHolder.setFormat(PixelFormat.TRANSLUCENT);
+            canvas.drawColor(Color.GREEN);
+            canvas.drawBitmap(mBitmap, 0, 0, null);
 
 
            //For IFP
-            canvas.drawColor(Color.WHITE);
-            mHolder.setFormat(PixelFormat.TRANSPARENT);
+//            canvas.drawColor(Color.WHITE);
+//            mHolder.setFormat(PixelFormat.TRANSPARENT);
 
             mHolder.unlockCanvasAndPost(canvas);
         } else {
@@ -316,15 +317,15 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         }
 
         //For Tablet only
-//        // After each touch event, update the screen
-//        if (mHolder != null) {
-//            Canvas canvas = mHolder.lockCanvas();
-//            if (canvas != null) {
-//                canvas.drawColor(Color.WHITE);  // Clear the canvas
-//                canvas.drawBitmap(mBitmap, 0, 0, null);  // Draw the bitmap
-//                mHolder.unlockCanvasAndPost(canvas);
-//            }
-//        }
+        // After each touch event, update the screen
+        if (mHolder != null) {
+            Canvas canvas = mHolder.lockCanvas();
+            if (canvas != null) {
+                canvas.drawColor(Color.WHITE);  // Clear the canvas
+                canvas.drawBitmap(mBitmap, 0, 0, null);  // Draw the bitmap
+                mHolder.unlockCanvasAndPost(canvas);
+            }
+        }
         
         return true;
     }
@@ -340,19 +341,28 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             // Highlighter settings
             mPaint.setStrokeCap(Paint.Cap.SQUARE);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
-            mPaint.setPathEffect(new android.graphics.CornerPathEffect(60f));
+            mPaint.setStyle(Paint.Style.STROKE);
+            mPaint.setPathEffect(null);
+            // Use SRC_OVER instead of MULTIPLY to prevent erasing
             mPaint.setXfermode(new android.graphics.PorterDuffXfermode(
-                android.graphics.PorterDuff.Mode.MULTIPLY));
+                android.graphics.PorterDuff.Mode.SRC_OVER));
+            // Keep the alpha from the color
+            mPaint.setAlpha(Color.alpha(color));
+            // Add slight transparency to make it look like a highlighter
+            mPaint.setAlpha(defaultHighlighterAlpha);
         } else if (isDashed) {
             // Dashed pen settings
             mPaint.setStrokeCap(Paint.Cap.ROUND);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setStyle(Paint.Style.STROKE);
             mPaint.setPathEffect(new android.graphics.DashPathEffect(
                 new float[]{DASH_LENGTH * density, GAP_LENGTH * density}, 0));
+            mPaint.setXfermode(null);
         } else {
             // Normal pen settings
             mPaint.setStrokeCap(Paint.Cap.ROUND);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setStyle(Paint.Style.STROKE);
             mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
             mPaint.setXfermode(null);
         }

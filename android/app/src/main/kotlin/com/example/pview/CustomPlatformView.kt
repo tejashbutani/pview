@@ -21,10 +21,14 @@ class CustomPlatformView(
     init {
         methodChannel.setMethodCallHandler(this)
         rendLibView.setMethodChannel(methodChannel)
-        val colorValue = creationParams?.get("color")
-        val widthValue = creationParams?.get("width")
-        // android.util.Log.d("CustomPlatformView", "Color value: $colorValue (${colorValue?.javaClass})")
-        // android.util.Log.d("CustomPlatformView", "Width value: $widthValue (${widthValue?.javaClass})")
+        
+        // Handle initial pen settings
+        val isDashed = creationParams?.get("isDashed") as? Boolean ?: false
+        rendLibView.setDashed(isDashed)
+        rendLibView.updatePenSettings(
+            (creationParams?.get("color") as? Number)?.toInt() ?: Color.BLACK,
+            (creationParams?.get("width") as? Double)?.toFloat() ?: 5.0f
+        )
     }
 
     override fun getView(): View {
@@ -48,6 +52,11 @@ class CustomPlatformView(
                     // android.util.Log.e("PenSettings", "Invalid arguments - Color: $color, Width: $width")
                     result.error("INVALID_ARGUMENTS", "Color or width is null", null)
                 }
+            }
+            "setDashed" -> {
+                val isDashed = call.argument<Boolean>("dashed") ?: false
+                rendLibView.setDashed(isDashed)
+                result.success(null)
             }
             "clear" -> {
                 rendLibView.clearCanvas()

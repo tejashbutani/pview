@@ -68,6 +68,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
     private Map<Integer, Float> mLastXMap = new HashMap<>();
     private Map<Integer, Float> mLastYMap = new HashMap<>();
 
+    private boolean isDashed = false;
+    private static final float DASH_LENGTH = 30f;  // Length of dash
+    private static final float GAP_LENGTH = 20f;   // Length of gap (2:3 ratio)
+
     public void setMethodChannel(MethodChannel channel) {
     this.methodChannel = channel;
    } 
@@ -326,17 +330,31 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         mPaint.setStrokeWidth(physicalWidth);
         
         if (Color.alpha(color) < 255) {
+            // Highlighter settings
             mPaint.setStrokeCap(Paint.Cap.SQUARE);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
             mPaint.setPathEffect(new android.graphics.CornerPathEffect(60f));
             mPaint.setXfermode(new android.graphics.PorterDuffXfermode(
                 android.graphics.PorterDuff.Mode.MULTIPLY));
+        } else if (isDashed) {
+            // Dashed pen settings
+            mPaint.setStrokeCap(Paint.Cap.ROUND);
+            mPaint.setStrokeJoin(Paint.Join.ROUND);
+            mPaint.setPathEffect(new android.graphics.DashPathEffect(
+                new float[]{DASH_LENGTH * density, GAP_LENGTH * density}, 0));
         } else {
+            // Normal pen settings
             mPaint.setStrokeCap(Paint.Cap.ROUND);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
             mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
             mPaint.setXfermode(null);
         }
+    }
+
+    public void setDashed(boolean dashed) {
+        isDashed = dashed;
+        // Reapply pen settings to ensure path effect is updated
+        updatePenSettings(mPaint.getColor(), mPaint.getStrokeWidth() / getResources().getDisplayMetrics().density);
     }
 
     public void clearCanvas() {

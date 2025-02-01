@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pview/models/stroke.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'dart:ui' as ui;
 
 enum PenType {
   normal,
   highlighter,
+  dashed,
 }
 
 void main() {
@@ -55,6 +57,12 @@ class _DrawingScreenState extends State<DrawingScreen> {
   _togglePen() {
     setState(() {
       isPenEnabled = !isPenEnabled;
+      if (isPenEnabled) {
+        // Update pen settings when enabling the pen
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _updatePenSettings();
+        });
+      }
     });
   }
 
@@ -79,11 +87,13 @@ class _DrawingScreenState extends State<DrawingScreen> {
                 creationParams: {
                   'color': currentColor.value,
                   'width': currentWidth,
+                  'isDashed': currentPenType == PenType.dashed,
                 },
                 creationParamsCodec: const StandardMessageCodec(),
                 onPlatformViewCreated: (int id) {
                   _channel = MethodChannel('custom_canvas_view_$id');
                   _channel?.setMethodCallHandler(_handleMethodCall);
+                  _updatePenSettings();
                 },
               ),
             Positioned(
@@ -116,6 +126,20 @@ class _DrawingScreenState extends State<DrawingScreen> {
                     child: Icon(
                       Icons.highlight_alt,
                       color: currentPenType == PenType.highlighter ? Colors.orange : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton(
+                    onPressed: () {
+                      setState(() {
+                        currentPenType = PenType.dashed;
+                        _updatePenSettings();
+                      });
+                    },
+                    backgroundColor: currentPenType == PenType.dashed ? Colors.blue : Colors.white,
+                    child: Icon(
+                      Icons.line_style,
+                      color: currentPenType == PenType.dashed ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -218,11 +242,17 @@ class _DrawingScreenState extends State<DrawingScreen> {
       final color = currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor;
       final width = currentPenType == PenType.highlighter ? highlighterWidth : currentWidth;
 
+      // First update pen settings
       _channel!.invokeMethod('updatePenSettings', {
         'color': color.value,
         'width': width,
-      }).catchError((error) {
-        print('Flutter: Error updating pen settings: $error');
+      });
+
+      // Then update dashed state
+      _channel!.invokeMethod('setDashed', {
+        'dashed': currentPenType == PenType.dashed,
+      }).then((_) {
+        print('Flutter: Updated pen type to ${currentPenType.name}, dashed: ${currentPenType == PenType.dashed}');
       });
     } else {
       print('Flutter: Channel is null, cannot update pen settings');
@@ -236,11 +266,20 @@ class _DrawingScreenState extends State<DrawingScreen> {
           final strokeData = Map<String, dynamic>.from(call.arguments);
           final stroke = Stroke.fromJson(strokeData);
           setState(() {
-            strokes.add(Stroke(
-              points: stroke.points,
-              color: currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor,
-              width: currentPenType == PenType.highlighter ? highlighterWidth : currentWidth,
-            ));
+            if (currentPenType == PenType.dashed) {
+              strokes.add(DashedStroke(
+                points: stroke.points,
+                color: currentColor,
+                width: currentWidth,
+              ));
+            } else {
+              strokes.add(Stroke(
+                points: stroke.points,
+                color: currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor,
+                width: currentPenType == PenType.highlighter ? highlighterWidth : currentWidth,
+                isDashed: false,
+              ));
+            }
           });
         } catch (e) {
           print('Error processing stroke data: $e');
@@ -271,14 +310,42 @@ class ToolsPainter extends CustomPainter {
         ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
 
-      final path = Path();
-      path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
+      if (stroke is DashedStroke) {
+        final path = Path();
+        path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
+        for (int i = 1; i < stroke.points.length; i++) {
+          path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+        }
 
-      for (int i = 1; i < stroke.points.length; i++) {
-        path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+        final pathMetrics = path.computeMetrics();
+        final dashedPath = Path();
+
+        for (final metric in pathMetrics) {
+          var distance = 0.0;
+          final length = metric.length;
+
+          while (distance < length) {
+            // Draw dash
+            dashedPath.addPath(
+              metric.extractPath(distance, distance + 30),
+              Offset.zero,
+            );
+            // Skip gap
+            distance += 50; // 30 (dash) + 20 (gap)
+          }
+        }
+
+        canvas.drawPath(dashedPath, paint);
+      } else {
+        final path = Path();
+        path.moveTo(stroke.points[0].dx, stroke.points[0].dy);
+
+        for (int i = 1; i < stroke.points.length; i++) {
+          path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+        }
+
+        canvas.drawPath(path, paint);
       }
-
-      canvas.drawPath(path, paint);
     }
   }
 

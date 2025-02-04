@@ -37,7 +37,7 @@ import io.flutter.plugin.common.MethodChannel;
 public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
     /** only For Delta */
-//    private WhiteBoardSpeedup mWhiteBoardSpeedup;
+    // private WhiteBoardSpeedup mWhiteBoardSpeedup;
     
     private SurfaceHolder mHolder;
 
@@ -115,21 +115,21 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        mScreenHeight = resolution[1];
 
         /** only for Testing on Tablet */
-       mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+      mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
 
         /** only for HIKVISION */
 //        RenderUtils.initRendLib();
 //        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
 
         /** only for Delta */
-        // mWhiteBoardSpeedup = new WhiteBoardSpeedup();
-        // try {
-        //     mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
-        // } catch (Exception ex) {
-        //     Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
-        //     ex.printStackTrace();
-        // }
-        // mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
+        //  mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+        //  try {
+        //      mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+        //  } catch (Exception ex) {
+        //      Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+        //      ex.printStackTrace();
+        //  }
+        //  mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
 
         getHolder().addCallback(this);
         
@@ -156,21 +156,21 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        mScreenHeight = resolution[1];
 
         /** only for Testing on Tablet */
-        mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
+       mBitmap = Bitmap.createBitmap(3840, 2160, Bitmap.Config.ARGB_8888);
 
         /** only for HIKVISION */
 //        RenderUtils.initRendLib();
 //        mBitmap = RenderUtils.getAccelerateBitmap(3840, 2160);
 
         /** only for Delta */
-//        mWhiteBoardSpeedup = new WhiteBoardSpeedup();
-//        try {
-//            mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
-//        } catch (Exception ex) {
-//            Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
-//            ex.printStackTrace();
-//        }
-//        mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
+        // mWhiteBoardSpeedup = new WhiteBoardSpeedup();
+        // try {
+        //     mWhiteBoardSpeedup.init(Bitmap.Config.ARGB_4444);
+        // } catch (Exception ex) {
+        //     Log.e(TAG, "Failed to initialize WhiteBoardSpeedup: " + ex.toString());
+        //     ex.printStackTrace();
+        // }
+        // mBitmap = mWhiteBoardSpeedup.getAccelFbCurFrameBitmap();
 //
         getHolder().addCallback(this);
         
@@ -197,14 +197,14 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             Canvas canvas = mHolder.lockCanvas();
 
             //For Tablet
-            mHolder.setFormat(PixelFormat.TRANSLUCENT);
-            canvas.drawColor(Color.GREEN);
-            canvas.drawBitmap(mBitmap, 0, 0, null);
+           mHolder.setFormat(PixelFormat.TRANSLUCENT);
+           canvas.drawColor(Color.GREEN);
+           canvas.drawBitmap(mBitmap, 0, 0, null);
 
 
            //For IFP
-//            canvas.drawColor(Color.WHITE);
-//            mHolder.setFormat(PixelFormat.TRANSPARENT);
+            // canvas.drawColor(Color.WHITE);
+            // mHolder.setFormat(PixelFormat.TRANSPARENT);
 
             mHolder.unlockCanvasAndPost(canvas);
         } else {
@@ -247,8 +247,12 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mLastXMap.put(pointerId, startX);
                 mLastYMap.put(pointerId, startY);
 
-                mPaintCanvas.drawPoint(startX, startY, mPaint);
-                 Log.w("onTouchEvent", "ACTION_POINTER_DOWN " + mPaint.getColor()  + mPaint.getStrokeWidth());
+                if (isDashed) {
+                    // For dashed lines, we'll draw segments based on physical distance
+                    mPaintCanvas.drawPoint(startX, startY, mPaint);
+                } else {
+                    mPaintCanvas.drawPoint(startX, startY, mPaint);
+                }
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -263,19 +267,46 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                     Float lastY = mLastYMap.get(id);
                     
                     if (currentPath != null && currentPoints != null && lastX != null && lastY != null) {
-                        float midX = (lastX + x) / 2;
-                        float midY = (lastY + y) / 2;
-                        
-                        currentPath.quadTo(lastX, lastY, midX, midY);
+                        if (isDashed) {
+                            // Calculate the distance between points
+                            float distance = (float) Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2));
+                            float density = getResources().getDisplayMetrics().density;
+                            
+                            // Only draw if we've moved enough distance
+                            if (distance >= (DASH_LENGTH + GAP_LENGTH) * density) {
+                                // Calculate the direction vector
+                                float dirX = (x - lastX) / distance;
+                                float dirY = (y - lastY) / distance;
+                                
+                                // Draw the dash
+                                float dashEndX = lastX + dirX * DASH_LENGTH * density;
+                                float dashEndY = lastY + dirY * DASH_LENGTH * density;
+                                
+                                currentPath.reset();
+                                currentPath.moveTo(lastX, lastY);
+                                currentPath.lineTo(dashEndX, dashEndY);
+                                mPaintCanvas.drawPath(currentPath, mPaint);
+                                
+                                // Update the last position to after the gap
+                                float newLastX = lastX + dirX * (DASH_LENGTH + GAP_LENGTH) * density;
+                                float newLastY = lastY + dirY * (DASH_LENGTH + GAP_LENGTH) * density;
+                                mLastXMap.put(id, newLastX);
+                                mLastYMap.put(id, newLastY);
+                            }
+                        } else {
+                            // Normal continuous line drawing
+                            float midX = (lastX + x) / 2;
+                            float midY = (lastY + y) / 2;
+                            
+                            currentPath.quadTo(lastX, lastY, midX, midY);
+                            mPaintCanvas.drawPath(currentPath, mPaint);
+                            
+                            mLastXMap.put(id, x);
+                            mLastYMap.put(id, y);
+                        }
                         currentPoints.add(new PointF(x, y));
-                        
-                        mPaintCanvas.drawPath(currentPath, mPaint);
-                        
-                        mLastXMap.put(id, x);
-                        mLastYMap.put(id, y);
                     }
                 }
-                 Log.w("onTouchEvent", "ACTION_POINTER_MOVE " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -305,7 +336,6 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
                 mStrokePointsMap.remove(pointerId);
                 mLastXMap.remove(pointerId);
                 mLastYMap.remove(pointerId);
-                 Log.w("onTouchEvent", "ACTION_POINTER_UP " + mPaint.getColor()  + mPaint.getStrokeWidth());
                 break;
 
             case MotionEvent.ACTION_CANCEL:
@@ -330,12 +360,10 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
         return true;
     }
 
-    public void updatePenSettings(int color, float width) {
+    public void updatePenColor(int color) {
         float density = getResources().getDisplayMetrics().density;
-        float physicalWidth = width * density;
         
         mPaint.setColor(color);
-        mPaint.setStrokeWidth(physicalWidth);
         
         if (Color.alpha(color) < 255) {
             // Highlighter settings
@@ -343,35 +371,31 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
             mPaint.setStrokeJoin(Paint.Join.ROUND);
             mPaint.setStyle(Paint.Style.STROKE);
             mPaint.setPathEffect(null);
-            // Use SRC_OVER instead of MULTIPLY to prevent erasing
             mPaint.setXfermode(new android.graphics.PorterDuffXfermode(
                 android.graphics.PorterDuff.Mode.SRC_OVER));
-            // Keep the alpha from the color
             mPaint.setAlpha(Color.alpha(color));
-            // Add slight transparency to make it look like a highlighter
             mPaint.setAlpha(defaultHighlighterAlpha);
-        } else if (isDashed) {
-            // Dashed pen settings
-            mPaint.setStrokeCap(Paint.Cap.ROUND);
-            mPaint.setStrokeJoin(Paint.Join.ROUND);
-            mPaint.setStyle(Paint.Style.STROKE);
-            mPaint.setPathEffect(new android.graphics.DashPathEffect(
-                new float[]{DASH_LENGTH * density, GAP_LENGTH * density}, 0));
-            mPaint.setXfermode(null);
         } else {
-            // Normal pen settings
+            // Normal pen settings (both dashed and continuous)
             mPaint.setStrokeCap(Paint.Cap.ROUND);
             mPaint.setStrokeJoin(Paint.Join.ROUND);
             mPaint.setStyle(Paint.Style.STROKE);
             mPaint.setPathEffect(new android.graphics.CornerPathEffect(40f));
             mPaint.setXfermode(null);
+            mPaint.setAlpha(255);
         }
+    }
+
+    public void updatePenWidth(float width) {
+        float density = getResources().getDisplayMetrics().density;
+        float physicalWidth = width * density;
+        mPaint.setStrokeWidth(physicalWidth);
     }
 
     public void setDashed(boolean dashed) {
         isDashed = dashed;
         // Reapply pen settings to ensure path effect is updated
-        updatePenSettings(mPaint.getColor(), mPaint.getStrokeWidth() / getResources().getDisplayMetrics().density);
+        updatePenColor(mPaint.getColor());
     }
 
     public void clearCanvas() {
@@ -379,11 +403,11 @@ public class RendLibSurfaceView extends SurfaceView implements SurfaceHolder.Cal
 //        RenderUtils.clearBitmapContent();
 
         /** only for Delta */
-        // try {
-        //     mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
-        // } catch (Exception ex) {
-        //     Log.e(TAG, "Failed to clear canvas: " + ex.toString());
-        //     ex.printStackTrace();
-        // }
+        //  try {
+        //      mWhiteBoardSpeedup.clearFbFrame(WhiteBoardSpeedup.WhichFrameFlags.ALL);
+        //  } catch (Exception ex) {
+        //      Log.e(TAG, "Failed to clear canvas: " + ex.toString());
+        //      ex.printStackTrace();
+        //  }
     }
 }

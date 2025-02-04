@@ -74,13 +74,13 @@ class _DrawingScreenState extends State<DrawingScreen> {
 
         return Stack(
           children: [
-            CustomPaint(
-              painter: ToolsPainter(
-                strokes: strokes,
-                androidViewSize: androidViewSize,
-              ),
-              size: const Size(3860, 2160),
-            ),
+            // CustomPaint(
+            //   painter: ToolsPainter(
+            //     strokes: strokes,
+            //     androidViewSize: androidViewSize,
+            //   ),
+            //   size: const Size(3860, 2160),
+            // ),
             if (isPenEnabled)
               AndroidView(
                 viewType: 'custom_canvas_view',
@@ -242,20 +242,19 @@ class _DrawingScreenState extends State<DrawingScreen> {
       final color = currentPenType == PenType.highlighter ? (currentColor == Colors.black ? defaultHighlighterColor : currentColor).withAlpha(defaultHighlighterAlpha) : currentColor;
       final width = currentPenType == PenType.highlighter ? highlighterWidth : currentWidth;
 
-      // First update pen settings
-      _channel!.invokeMethod('updatePenSettings', {
+      // Update color and width separately
+      _channel!.invokeMethod('updatePenColor', {
         'color': color.value,
+      });
+
+      _channel!.invokeMethod('updatePenWidth', {
         'width': width,
       });
 
-      // Then update dashed state
+      // Update dashed state
       _channel!.invokeMethod('setDashed', {
         'dashed': currentPenType == PenType.dashed,
-      }).then((_) {
-        print('Flutter: Updated pen type to ${currentPenType.name}, dashed: ${currentPenType == PenType.dashed}');
       });
-    } else {
-      print('Flutter: Channel is null, cannot update pen settings');
     }
   }
 

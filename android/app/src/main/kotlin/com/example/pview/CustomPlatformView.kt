@@ -25,8 +25,10 @@ class CustomPlatformView(
         // Handle initial pen settings
         val isDashed = creationParams?.get("isDashed") as? Boolean ?: false
         rendLibView.setDashed(isDashed)
-        rendLibView.updatePenSettings(
-            (creationParams?.get("color") as? Number)?.toInt() ?: Color.BLACK,
+        rendLibView.updatePenColor(
+            (creationParams?.get("color") as? Number)?.toInt() ?: Color.BLACK
+        )
+        rendLibView.updatePenWidth(
             (creationParams?.get("width") as? Double)?.toFloat() ?: 5.0f
         )
     }
@@ -41,16 +43,22 @@ class CustomPlatformView(
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "updatePenSettings" -> {
+            "updatePenColor" -> {
                 val color = (call.argument<Number>("color"))?.toInt()
-                val width = call.argument<Double>("width")
-                // android.util.Log.d("PenSettings", "Received method call - Color: $color, Width: $width")
-                if (color != null && width != null) {
-                    rendLibView.updatePenSettings(color, width.toFloat())
+                if (color != null) {
+                    rendLibView.updatePenColor(color)
                     result.success(null)
                 } else {
-                    // android.util.Log.e("PenSettings", "Invalid arguments - Color: $color, Width: $width")
-                    result.error("INVALID_ARGUMENTS", "Color or width is null", null)
+                    result.error("INVALID_ARGUMENTS", "Color is null", null)
+                }
+            }
+            "updatePenWidth" -> {
+                val width = call.argument<Double>("width")
+                if (width != null) {
+                    rendLibView.updatePenWidth(width.toFloat())
+                    result.success(null)
+                } else {
+                    result.error("INVALID_ARGUMENTS", "Width is null", null)
                 }
             }
             "setDashed" -> {
